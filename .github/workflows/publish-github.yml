@@ -1,0 +1,37 @@
+name: publish to GitHub Packages
+on: workflow_dispatch
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ⎔ Setup node
+        # sets up the .npmrc file to publish to GitHub Packages
+        uses: actions/setup-node@v4
+        with:
+          node-version: "16"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@gigaphoton"
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
+
+      - name: Configure git user
+        env:
+          ACTOR: ${{ github.actor }}
+        run: |
+          git config --global user.email "$ACTOR@users.noreply.github.com"
+          git config --global user.name "$ACTOR"
+      - name: Publish to GitHub Packages
+        run: npm run release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

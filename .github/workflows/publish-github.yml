@@ -21,9 +21,7 @@ jobs:
           scope: "@gigaphoton"
 
       - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+        run: npm install --no-package-lock
 
       - name: Configure git user
         env:

@@ -29,7 +29,22 @@ jobs:
         run: |
           git config --global user.email "$ACTOR@users.noreply.github.com"
           git config --global user.name "$ACTOR"
-      - name: Publish to GitHub Packages
-        run: npm run release
+      # Build dist without the karma browser suite. The `build`/`release`
+      # scripts gate on `npm run test`, whose popup-dimensions test is flaky
+      # under current Chrome Headless. karma still runs in build.yml on push/PR.
+      - name: 🛠️ Build dist
+        run: npm run babel && npm run clear-dist && npm run webpack
+
+      # standard-version bumps the version, writes the changelog, commits, and
+      # tags. Calling it directly (not `npm run release`) skips the
+      # prerelease/postrelease npm hooks so the browser tests don't gate publish.
+      - name: 🔖 Version and tag
+        run: npx standard-version
+
+      - name: ⬆️ Push commit and tag
+        run: git push --follow-tags origin HEAD:main
+
+      - name: 📦 Publish to GitHub Packages
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
